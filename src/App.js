@@ -29,11 +29,7 @@ class App extends Component {
     this.limparPontos = this.limparPontos.bind(this)
   }
 
-  onMapClick(event) {
-    if (this.state.pontos.length >= 10) {
-      return window.alert('Limitado a 10 pontos (100 elementos) por requisição')      
-    }
-
+  onMapClick(event) {    
     const ponto = {id: uuid(), lat: event.latLng.lat(), lng: event.latLng.lng()}
     this.setState({pontos: [...this.state.pontos,         
         ponto
