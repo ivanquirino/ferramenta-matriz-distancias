@@ -132,11 +132,10 @@ class App extends Component {
         const row = result.rows[0].elements
 
         linha.push(...row)
-
+        matriz[i] = linha
         this.setState({matriz})
       }
 
-      matriz.push(linha)
       this.setState({current: i})
     }
 
@@ -256,7 +255,7 @@ class App extends Component {
       </Container>
 
       {this.state.matriz !== null &&
-        <Container className='mb-5'>
+        <Container className='mb-5 text-center'>
           <Button color='primary' className='mr-3'
             onClick={this.gerarCSVDistancias}>
             Baixar CSV das distâncias
