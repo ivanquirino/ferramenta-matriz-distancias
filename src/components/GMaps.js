@@ -18,6 +18,8 @@ class MapHolder extends Component {
     this.onClick = this.onClick.bind(this)
   }
   render() {
+    console.log(mapsKey)
+
     return (
       <GoogleMap
         {...this.props}

@@ -162,7 +162,6 @@ class App extends Component {
   }
 
   render() {    
-    console.log(this.state.matriz)
     return <Fragment>
       <Container className='mb-5'>
         <header className="App-header text-center">          
