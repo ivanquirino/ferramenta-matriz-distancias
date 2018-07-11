@@ -72,7 +72,7 @@ class App extends Component {
     this.setState({carregando: true})  
 
     try {      
-      const matriz = await this.requestMatrixLimited(this.state.pontos)
+      const matriz = await this.requestMatrix(this.state.pontos)
       return this.setState({matriz, carregando: false})      
     } catch(e) {
       console.error(e)
@@ -104,52 +104,57 @@ class App extends Component {
     return result.rows
   }
 
-  async requestMatrix(pontos) {    
-    const limit = 10
+  async requestMatrix(pontos) {   
     const matriz = []
+    const page = 24
 
     this.setState({total: pontos.length})
-
-    for (let i = 0; i < pontos.length; i += limit) {      
-      const parcel = pontos.slice(i, i + limit)      
-
-      const options = {
-        origins: parcel,
-        destinations: parcel,
-        travelMode: 'DRIVING'
-      }
-
-      const promise = new Promise((resolve, reject) => {
-        function callDMService() {
-          const DMService = new window.google.maps.DistanceMatrixService()
-
-          DMService.getDistanceMatrix(options, 
-            (response, status) => {
-              if (status !== 'OK') return reject(status);
-              resolve(response);
-          });
-        }        
-
-        if (i > 0) {
-          return window.setTimeout(() => {
-            callDMService()
-          }, 11000)
-        }
-
-        callDMService()  
-      })
-
+    
+    for (let i = 0; i < pontos.length; i++) {      
+      const ponto = pontos[i]
+      const linha = []
       
-      const result = await promise            
-      this.setState({current: i})
-
-      matriz.push(...result.rows)
-      this.setState({matriz})
+      for (let j = 0; j < pontos.length; j += page) {
+        const slice = pontos.slice(j, j + page)
+        
+        const options =  {
+          origins: [ponto],
+          destinations: slice,
+          travelMode: 'DRIVING'
+        }       
+  
+        const result = await this.callDMService(options, 0)
+        const row = result.rows[0].elements
+        
+        linha.push(...row)        
+        
+        this.setState({matriz})
+      }
+      matriz.push(linha)
+      this.setState({current: i})      
     }    
-
-    this.setState({current: pontos.length})
     
     return matriz
+  }
+
+  callDMService(options, timeToWait) {
+    const timeSpan = 1000
+
+    const promise = new Promise((resolve, reject) => {
+      const DMService = new window.google.maps.DistanceMatrixService()
+      
+      DMService.getDistanceMatrix(options, (response, status) => {
+        if (status !== 'OK') {
+          return setTimeout(() => {
+            resolve(this.callDMService(options, timeToWait + timeSpan))
+          }, timeToWait);          
+        }
+
+        resolve(response)
+      })
+    })
+
+    return promise
   }
 
   limparPontos() {
@@ -157,6 +162,7 @@ class App extends Component {
   }
 
   render() {    
+    console.log(this.state.matriz)
     return <Fragment>
       <Container className='mb-5'>
         <header className="App-header text-center">          
@@ -213,7 +219,7 @@ class App extends Component {
             <thead>
               <tr>
                 <th>#</th>
-                {Object.keys(this.state.matriz).map((key, index) => {
+                {Object.keys(this.state.pontos).map((key, index) => {
                   return <th key={index}>{key}</th>
                 })}
               </tr>
@@ -224,14 +230,51 @@ class App extends Component {
                 
                 return <tr key={index}>
                   <th scope='row'>{key}</th>
-                  {row.elements.map((elemento, indexEl) => {
-                    const id = `element${index}-${indexEl}`                                      
+                  {row.map((elemento, indexEl) => {
+                    const id = `element-m-${index}-${indexEl}`                                      
                     return <td key={indexEl}>
                       {elemento.distance.value === 0 ? 0 :
                         <Fragment>
-                          <span id={id}>{elemento.distance.text}, {elemento.duration.text}</span>
+                          <span id={id}>{elemento.distance.text}</span>
                           <UncontrolledTooltip target={id}>
-                            {elemento.distance.value}m, {elemento.duration.value}s
+                            {elemento.distance.value}m
+                          </UncontrolledTooltip>
+                        </Fragment>
+                      }                      
+                    </td>
+                  })}
+                </tr>
+              })}
+            </tbody>
+          </Table>
+        </Container>
+      }
+
+      {this.state.matriz !== null &&
+        <Container fluid className='mb-5'>
+          <Table striped hover bordered>
+            <thead>
+              <tr>
+                <th>#</th>
+                {Object.keys(this.state.pontos).map((key, index) => {
+                  return <th key={index}>{key}</th>
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {Object.keys(this.state.matriz).map((key, index) => {                  
+                const row = this.state.matriz[key]
+                
+                return <tr key={index}>
+                  <th scope='row'>{key}</th>
+                  {row.map((elemento, indexEl) => {
+                    const id = `element-s-${index}-${indexEl}`                                      
+                    return <td key={indexEl}>
+                      {elemento.distance.value === 0 ? 0 :
+                        <Fragment>
+                          <span id={id}>{elemento.duration.text}</span>
+                          <UncontrolledTooltip target={id}>
+                            {elemento.duration.value}s
                           </UncontrolledTooltip>
                         </Fragment>
                       }                      
