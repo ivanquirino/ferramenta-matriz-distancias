@@ -184,15 +184,13 @@ class App extends Component {
       })
     })
 
-    let csv = renderCSV(tempos)
-    console.log(csv)
+    let csv = renderCSV(tempos)    
     this.downloadCSVData(csv, 'tempos.csv')    
   }
 
   downloadCSVData(stringData, filename) {
     const csv = csvHeader + stringData
-    const data = encodeURI(csv)    
-    console.log(data)
+    const data = encodeURI(csv)
 
     const link = document.createElement('a')
     
@@ -200,8 +198,7 @@ class App extends Component {
     link.setAttribute('href', data)
     link.setAttribute('download', filename)
     
-    document.body.appendChild(link)
-        console.log(link)
+    document.body.appendChild(link)        
     link.click()
 
     document.body.removeChild(link)
