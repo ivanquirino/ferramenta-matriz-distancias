@@ -5,6 +5,7 @@ import {Marker} from 'react-google-maps'
 import {Table, Button, UncontrolledTooltip} from 'reactstrap'
 import uuid from 'uuid/v4'
 import pontos from './dados/pontos'
+import renderCSV from './csv'
 
 const initialState = {
   pontos: pontos,
@@ -13,6 +14,8 @@ const initialState = {
   current: 0,
   total: 0
 }
+
+const csvHeader = 'data:text/csv;charset-utf-8,\n'
 
 class App extends Component {
   constructor(props) {
@@ -27,6 +30,8 @@ class App extends Component {
     this.renderMarker = this.renderMarker.bind(this)
     this.getMatrizDistancias = this.getMatrizDistancias.bind(this)
     this.limparPontos = this.limparPontos.bind(this)
+    this.gerarCSVDistancias = this.gerarCSVDistancias.bind(this)
+    this.gerarCSVTempos = this.gerarCSVTempos.bind(this)
   }
 
   onMapClick(event) {    
@@ -161,6 +166,47 @@ class App extends Component {
     this.setState({...initialState, pontos: []})
   }
 
+  gerarCSVDistancias() {
+    const distancias = this.state.matriz.map(item => {
+      return item.map(itemlinha => {
+        return itemlinha.distance.value
+      })
+    })
+
+    let csv = renderCSV(distancias)
+    this.downloadCSVData(csv, 'distancias.csv')    
+  }
+
+  gerarCSVTempos() {
+    const tempos = this.state.matriz.map(item => {
+      return item.map(itemlinha => {
+        return itemlinha.duration.value
+      })
+    })
+
+    let csv = renderCSV(tempos)
+    console.log(csv)
+    this.downloadCSVData(csv, 'tempos.csv')    
+  }
+
+  downloadCSVData(stringData, filename) {
+    const csv = csvHeader + stringData
+    const data = encodeURI(csv)    
+    console.log(data)
+
+    const link = document.createElement('a')
+    
+    link.style.display = 'none'
+    link.setAttribute('href', data)
+    link.setAttribute('download', filename)
+    
+    document.body.appendChild(link)
+        console.log(link)
+    link.click()
+
+    document.body.removeChild(link)
+  }
+
   render() {    
     return <Fragment>
       <Container className='mb-5'>
@@ -211,6 +257,13 @@ class App extends Component {
           </Fragment>      
         }          
       </Container>
+
+      {this.state.matriz !== null &&
+        <Container className='mb-5'>
+          <Button color='primary' className='mr-3' onClick={this.gerarCSVDistancias}>Baixar CSV das distâncias</Button>
+          <Button color='primary' onClick={this.gerarCSVTempos}>Baixar CSV dos tempos</Button>
+        </Container>
+      }
 
       {this.state.matriz !== null &&
         <Container fluid className='mb-5'>
