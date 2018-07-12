@@ -86,34 +86,22 @@ class App extends Component {
     }
   }
 
-  async requestMatrixLimited(pontos) {
-    const parcel = pontos.slice(0, 10)
-
-    const options = {
-      origins: parcel,
-      destinations: parcel,
-      travelMode: 'DRIVING'
+  calculaTotal(pontos, pagina) {
+    let total = 0
+    for (let i = 0; i < pontos.length; i++) {
+      for (let j = 0; j < pontos.length; j += pagina) {
+        total++
+      }
     }
 
-    const promise = new Promise((resolve, reject) => {
-      const DMService = new window.google.maps.DistanceMatrixService()
-
-      DMService.getDistanceMatrix(options,
-        (response, status) => {
-          if (status !== 'OK') return reject(status)
-          resolve(response)
-        })
-    })
-
-    const result = await promise
-    return result.rows
+    return total
   }
 
   async requestMatrix(pontos) {
     const matriz = []
     const page = 25
 
-    this.setState({total: pontos.length})
+    this.setState({total: this.calculaTotal(pontos, page)})
 
     for (let i = 0; i < pontos.length; i++) {
       const ponto = pontos[i]
@@ -133,10 +121,8 @@ class App extends Component {
 
         linha.push(...row)
         matriz[i] = linha
-        this.setState({matriz})
+        this.setState({matriz, current: this.state.current + 1})
       }
-
-      this.setState({current: i})
     }
 
     return matriz
@@ -246,8 +232,12 @@ class App extends Component {
                 {this.state.carregando ? 'Aguarde...' :
                   'Gerar Matriz de Distâncias'}
               </Button>
+
               {this.state.total > 0 &&
-               <p>Progresso: {this.state.current} / {this.state.total}</p>
+               <p style={{fontSize: '1.6rem'}} className='mt-5'>
+                Progresso das requisições:
+                 {` ${this.state.current} / ${this.state.total}`}
+                 {` ${Math.round((this.state.current / this.state.total) * 100)}%`}</p>
               }
             </div>
           </Fragment>
